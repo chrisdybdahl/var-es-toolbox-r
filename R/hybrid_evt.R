@@ -104,17 +104,17 @@ forecast_u_EVT_GARCH <- function(
       # Using Pickands-Balkema-de Haan Extreme Value Theorem (Balkema & de Haan, 1974) we can derive VaR for GPD
       # From Hull (2018) we have a definition for ES for GPD
 
-      var_evt <- ifelse(
-        xi != 0,
-        abs(u) + (beta / xi) * ((1 - c)^(-xi) - 1),
+      var_evt <- if (xi != 0) {
+        abs(u) + (beta / xi) * ((1 - c)^(-xi) - 1)
+      } else {
         abs(u) - beta * log(1 - c)
-      )
+      }
 
-      es_evt <- ifelse(
-        xi != 0,
-        (var_evt + beta - abs(u) * xi) / (1 - xi),
+      es_evt <- if (xi != 0) {
+        (var_evt + beta - abs(u) * xi) / (1 - xi)
+      } else {
         var_evt + beta
-      )
+      }
 
       # Ensure the calculated values are valid
       if (any(is.na(var_evt)) || any(is.na(es_evt))) {
@@ -149,3 +149,4 @@ forecast_u_EVT_GARCH <- function(
 
   return(results_xts)
 }
+

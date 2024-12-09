@@ -2,7 +2,7 @@ require(esback)
 require(Rcpp)
 require(rugarch)
 require(segMGarch)
-require(Rcpp)
+
 
 # Kupiec (1995) and Christoffersen (1998)
 run_kc_backtest <- function(actual, VaR, alpha) {
@@ -150,6 +150,57 @@ run_backtests <- function(actual, VaR, ES, alpha, prefix, VOL = NULL, b = 1000) 
   return(backtest_template)
 }
 
+
+# Function to perform MCS test for each confidence level
+perform_mcs_test_by_confidence <- function(losses, alpha_levels, nboot) {
+  mcs_results <- list()
+
+  # Exclude the "Date" column and process only model-related columns
+  relevant_columns <- colnames(losses)[colnames(losses) != "Date"]
+
+  # Ensure there are relevant columns for processing
+  if (length(relevant_columns) == 0) {
+    warning("No relevant columns found for MCS test.")
+    return(mcs_results)
+  }
+
+  for (conf_level in unique(sub(".*_", "", relevant_columns))) {
+    print(paste("Processing confidence level:", conf_level))
+
+    # Filter losses for current confidence level
+    conf_losses <- losses[, grepl(paste0("_", conf_level, "$"), relevant_columns), drop = FALSE]
+
+    if (ncol(conf_losses) == 0) {
+      warning(paste("No columns found for confidence level:", conf_level))
+      next
+    }
+
+    # Replace NA and run MCS test
+    conf_losses[is.na(conf_losses)] <- 1e6
+
+    for (alpha in alpha_levels) {
+      tryCatch({
+        mcs_result <- rugarch::mcsTest(conf_losses, alpha = alpha, nboot = nboot, boot = "stationary")
+
+        includedR_indices <- mcs_result$includedR
+        includedSQ_indices <- mcs_result$includedSQ
+
+        mcs_results[[paste0("alpha_", alpha, "_conf_", conf_level)]] <- list(
+          includedR_names = colnames(conf_losses)[includedR_indices],
+          excludedR_names = colnames(conf_losses)[setdiff(seq_len(ncol(conf_losses)), includedR_indices)],
+          includedSQ_names = colnames(conf_losses)[includedSQ_indices],
+          excludedSQ_names = colnames(conf_losses)[setdiff(seq_len(ncol(conf_losses)), includedSQ_indices)]
+        )
+      }, error = function(e) {
+        message(paste("MCS test failed for alpha:", alpha, "confidence level:", conf_level, "-", e$message))
+      })
+    }
+  }
+
+  return(mcs_results)
+
+}
+
 # Negative Asymmetric Laplace Log-Likelihood (AL) Loss
 custom_loss <- function(returns, VaR, ES, c) {
   loss_vector <- -log((c - 1) / ES) - ((returns - VaR) * (c - (returns <= VaR))) / (c * ES)
@@ -184,7 +235,6 @@ compute_losses_and_backtests <- function(df, models, c_levels, n, m, b = 1000, a
   # Load existing predictions if available
   if (file.exists(predictions_file)) {
     existing_predictions <- read.csv(predictions_file)
-    print(existing_predictions)
   } else {
     existing_predictions <- data.frame(Date = tail(df$Date, n))
   }
@@ -298,6 +348,11 @@ compute_losses_and_backtests <- function(df, models, c_levels, n, m, b = 1000, a
           }
         )
 
+        if (!all(is.na(loss)) && any(is.na(loss))) {
+          message(paste("Loss computation resulted in NA for model:", model_name, "confidence level:", c, ", setting high loss"))
+          loss[is.na(loss) | is.infinite(loss_vector)] <- 1e+10
+        }
+
         # Run backtests and add average loss
         backtest <- tryCatch(
           {
@@ -345,55 +400,4 @@ compute_losses_and_backtests <- function(df, models, c_levels, n, m, b = 1000, a
     losses = losses_df,
     backtests = backtests_df
   ))
-}
-
-
-# Function to perform MCS test for each confidence level
-perform_mcs_test_by_confidence <- function(losses, alpha_levels, nboot) {
-  mcs_results <- list()
-
-  # Exclude the "Date" column and process only model-related columns
-  relevant_columns <- colnames(losses)[colnames(losses) != "Date"]
-
-  # Ensure there are relevant columns for processing
-  if (length(relevant_columns) == 0) {
-    warning("No relevant columns found for MCS test.")
-    return(mcs_results)
-  }
-
-  for (conf_level in unique(sub(".*_", "", relevant_columns))) {
-    print(paste("Processing confidence level:", conf_level))
-
-    # Filter losses for current confidence level
-    conf_losses <- losses[, grepl(paste0("_", conf_level, "$"), relevant_columns), drop = FALSE]
-
-    if (ncol(conf_losses) == 0) {
-      warning(paste("No columns found for confidence level:", conf_level))
-      next
-    }
-
-    # Replace NA and run MCS test
-    conf_losses[is.na(conf_losses)] <- 1e6
-
-    for (alpha in alpha_levels) {
-      tryCatch({
-        mcs_result <- rugarch::mcsTest(conf_losses, alpha = alpha, nboot = nboot, boot = "stationary")
-
-        includedR_indices <- mcs_result$includedR
-        includedSQ_indices <- mcs_result$includedSQ
-
-        mcs_results[[paste0("alpha_", alpha, "_conf_", conf_level)]] <- list(
-          includedR_names = colnames(conf_losses)[includedR_indices],
-          excludedR_names = colnames(conf_losses)[setdiff(seq_len(ncol(conf_losses)), includedR_indices)],
-          includedSQ_names = colnames(conf_losses)[includedSQ_indices],
-          excludedSQ_names = colnames(conf_losses)[setdiff(seq_len(ncol(conf_losses)), includedSQ_indices)]
-        )
-      }, error = function(e) {
-        message(paste("MCS test failed for alpha:", alpha, "confidence level:", conf_level, "-", e$message))
-      })
-    }
-  }
-
-  return(mcs_results)
-
 }

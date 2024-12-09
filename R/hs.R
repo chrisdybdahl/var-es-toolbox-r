@@ -93,6 +93,7 @@ forecast_u_FHS_GARCH <- function(
     n,
     m,
     verbose = 1,
+    type = "GARCH",
     ...
   )
 }

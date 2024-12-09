@@ -1,6 +1,7 @@
 require(psych)
 require(dplyr)
 
+
 compute_yearly_std <- function(df) {
   # Ensure the Date column is in Date format
   if (!"Date" %in% colnames(df)) {
@@ -22,4 +23,3 @@ compute_yearly_std <- function(df) {
 
   return(yearly_std)
 }
-

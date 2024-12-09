@@ -1,9 +1,7 @@
 require(xts)
-require(rugarch)
 require(psych)
 require(ggplot2)
 require(gridExtra)
-require(tseries)
 
 # Function to plot all returns
 plot_all_returns <- function(data) {
@@ -174,14 +172,17 @@ plot_var_es <- function(dates, returns, var, es) {
     labs(color = "Legend")
 }
 
-plot_var_es_predictions <- function(assets, conf_level) {
+
+
+
+plot_var_es_predictions <- function(assets, conf_level, dir = "") {
   # Initialize lists to store plots
   var_plots <- list()
   es_plots <- list()
 
   for (asset in assets) {
     # Read predictions CSV
-    file_name <- file.path("results", paste0(asset, "_predictions.csv"))
+    file_name <- file.path(paste0(dir, asset, "_predictions.csv"))
     if (!file.exists(file_name)) {
       warning(paste("File not found:", file_name))
       next

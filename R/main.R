@@ -18,14 +18,7 @@ source(hybrid_evt_path)
 source(gas_path)
 source(caviar_path)
 
-# Set parameters
-c <- 0.05
-t <- 0.95
-p <- 1
-q <- 1
-m <- 250
-n <- 989
-refit <- 10
+df <- read.csv("data/clean_returns.csv", row.names = 1)
 
 # Define example models
 models <- list(
@@ -43,12 +36,12 @@ models <- list(
   "gjrGARCH_norm" = function(df, c, n, m) forecast_u_GARCH(df, c = c, n = n, m = m, r = 10, model = "gjrGARCH", dist = "norm"),
   "gjrGARCH_std" = function(df, c, n, m) forecast_u_GARCH(df, c = c, n = n, m = m, r = 10, model = "gjrGARCH", dist = "std"),
   "gjrGARCH_sstd" = function(df, c, n, m) forecast_u_GARCH(df, c = c, n = n, m = m, r = 10, model = "gjrGARCH", dist = "sstd"),
-  "EVT_sGARCH_norm" = function(df, c, n, m) forecast_u_EVT_GARCH(df, c = c, n = n, m = m, t = 0.95, r = 10, model = "sGARCH", dist = "norm"),
-  "EVT_sGARCH_std" = function(df, c, n, m) forecast_u_EVT_GARCH(df, c = c, n = n, m = m, t = 0.95, r = 10, model = "sGARCH", dist = "std"),
-  "EVT_sGARCH_sstd" = function(df, c, n, m) forecast_u_EVT_GARCH(df, c = c, n = n, m = m, t = 0.95, r = 10, model = "sGARCH", dist = "sstd"),
-  "EVT_gjrGARCH_norm" = function(df, c, n, m) forecast_u_EVT_GARCH(df, c = c, n = n, m = m, t = 0.95, r = 10, model = "gjrGARCH", dist = "norm"),
-  "EVT_gjrGARCH_std" = function(df, c, n, m) forecast_u_EVT_GARCH(df, c = c, n = n, m = m, t = 0.95, r = 10, model = "gjrGARCH", dist = "std"),
-  "EVT_gjrGARCH_sstd" = function(df, c, n, m) forecast_u_EVT_GARCH(df, c = c, n = n, m = m, t = 0.95, r = 10, model = "gjrGARCH", dist = "sstd"),
+  "EVT_sGARCH_norm" = function(df, c, n, m) forecast_u_EVT_GARCH(df, c = c, n = n, m = m, t = 0.9, r = 10, model = "sGARCH", dist = "norm"),
+  "EVT_sGARCH_std" = function(df, c, n, m) forecast_u_EVT_GARCH(df, c = c, n = n, m = m, t = 0.9, r = 10, model = "sGARCH", dist = "std"),
+  "EVT_sGARCH_sstd" = function(df, c, n, m) forecast_u_EVT_GARCH(df, c = c, n = n, m = m, t = 0.9, r = 10, model = "sGARCH", dist = "sstd"),
+  "EVT_gjrGARCH_norm" = function(df, c, n, m) forecast_u_EVT_GARCH(df, c = c, n = n, m = m, t = 0.9, r = 10, model = "gjrGARCH", dist = "norm"),
+  "EVT_gjrGARCH_std" = function(df, c, n, m) forecast_u_EVT_GARCH(df, c = c, n = n, m = m, t = 0.9, r = 10, model = "gjrGARCH", dist = "std"),
+  "EVT_gjrGARCH_sstd" = function(df, c, n, m) forecast_u_EVT_GARCH(df, c = c, n = n, m = m, t = 0.9, r = 10, model = "gjrGARCH", dist = "sstd"),
   "GAS_norm" = function(df,c, n, m) forecast_u_GAS(df, c = c, n = n, m = m, r = 10, dist = "norm"),
   "GAS_std" = function(df,c, n, m) forecast_u_GAS(df, c = c, n = n, m = m, r = 10, dist = "std"),
   "GAS_sstd" = function(df,c, n, m) forecast_u_GAS(df, c = c, n = n, m = m, r = 10, dist = "sstd"),
@@ -63,18 +56,24 @@ models <- list(
 )
 
 
-df <- read.csv("data/clean_returns.csv", row.names = 1)
+# Set parameters
 c <- c(0.025, 0.05)
-assets <- setdiff(colnames(return_df), "Date")
+n <- 989
+m <- 250
+p <- 1
+q <- 1
+t <- 0.9
+refit <- 10
 alpha_levels <- c(0.1, 0.05)
 nboot <- 1000
-set.seed(12)
 
+assets <- setdiff(colnames(return_df), "Date")
 #assets <- c("DEBMc1")
+
+options(warn = 1)
 
 for (asset in assets) {
   asset_df <- df[asset]
-  print(tail(asset_df,10))
   asset_df$Date <- as.Date(rownames(asset_df))
   colnames(asset_df) <- c("Return", "Date")
   rownames(asset_df) <- NULL
@@ -99,6 +98,8 @@ for (asset in assets) {
   }))
 
   write.csv(mcs_table, paste0(asset, "_mcs.csv"), row.names = FALSE)
+
 }
 
-plots <- plot_var_es_predictions("DEBYc1", 0.025)
+plots <- plot_var_es_predictions("DBc1", 0.05, dir = "")
+
