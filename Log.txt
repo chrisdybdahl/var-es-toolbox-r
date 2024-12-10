@@ -1,0 +1,63 @@
+10.12.24
+
+CAViaR fixed argument control and diagnostics
+CAViaR added 1e-7 as convergence rate for both optim and solnp
+CAViaR if model not converges, use parameters from last refitting
+
+09.12.24_latest
+
+Many fail for Q and Y contracts, specifically for GARCH types and using std
+All GARCH types have tol = 1e-7
+EVT-GARCH has very many violations
+CAViaR models create some negative values (all except indirectGARCH)
+Standardized tests not used, since VOL not saved
+DQ test always rejected
+Does CAViaR have more relaxed optimizing criteria, and maybe hard to converge when NA values?
+MCS not working
+Check if lags are correct
+
+DONE:
+EVT-GARCH fix - Changed gpd from evir to extreme
+EVT-GARCH threshold changed from 95% to 90%
+CAViaR Set NA in loss to be 5 * max loss
+CAViaR set parameter bound, and increased grid to 10000 from 1000
+CAViaR added Rsolnp optimization as roll back for optim
+EVT-GARCH changed lags and added reparam of GARCH, and fallback to GARCH
+
+
+
+09.12.24
+
+All GARCH types have tol = 1e-7
+gjrGARCH fails often
+EVT-GARCH has very many violations
+CAViaR models create some negative values (all except indirectGARCH)
+Standardized tests not used, since VOL not saved
+DQ test always rejected
+Does CAViaR have more relaxed optimizing criteria, and maybe hard to converge when NA values?
+MCS not working
+How many decimals?
+Check if lags are correct
+
+DONE:
+EVT-GARCH fix - Changed gpd from evir to extreme
+EVT-GARCH threshold changed from 95% to 90%
+Set NA in loss to 1e+10, which is a consequence of negative values
+
+07.12.24
+
+All GARCH types have tol = 1e-7
+gjrGARCH fails often
+EVT-GARCH creates some negative values
+- Can remove min exceedances
+
+eGARCH get very large sometimes
+CAViaR models create some negative values
+Standardized tests not used, since VOL not saved
+DQ test always rejected
+Does CAViaR have more relaxed optimizing criteria?
+MCS not working
+
+DONE:
+EVT-GARCH fix - Changed gpd from evir to extreme
+EVTshre

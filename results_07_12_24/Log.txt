@@ -1,0 +1,15 @@
+All GARCH types have tol = 1e-7
+gjrGARCH fails often
+EVT-GARCH creates some negative values
+- Can remove min exceedances
+
+eGARCH get very large sometimes
+CAViaR models create some negative values
+Standardized tests not used, since VOL not saved
+DQ test always rejected
+Does CAViaR have more relaxed optimizing criteria?
+MCS not working
+
+DONE:
+EVT-GARCH fix - Changed gpd from evir to extreme
+EVTshre

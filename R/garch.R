@@ -46,21 +46,21 @@ forecast_u_GARCH <- function(
     pdf_value <- sapply(c, function(conf) stats::dnorm(quantile[which(c == conf)]))
     quantile <- matrix(rep(quantile, n), nrow = n, byrow = TRUE)
     pdf_value <- matrix(rep(pdf_value, n), nrow = n, byrow = TRUE)
-    es <- sigmaFor * (pdf_value / c)
     var <- -sigmaFor * (quantile)
+    es <- sigmaFor * (pdf_value / c)
   } else if (dist == "std") {
     shapeFor <- garch_roll@forecast$density$Shape
     quantile <- sapply(c, function(conf) rugarch::qdist("std", p = conf, mu = 0, sigma = 1, shape = shapeFor))
     pdf_value <- sapply(c, function(conf) rugarch::ddist("std", quantile[which(c == conf)], mu = 0, sigma = 1, shape = shapeFor))
-    es <- sigmaFor * ((shapeFor + quantile^2) / (shapeFor - 1) * (pdf_value / c))
     var <- -sigmaFor * (quantile)
+    es <- sigmaFor * ((shapeFor + quantile^2) / (shapeFor - 1) * (pdf_value / c))
   } else if (dist == "sstd") {
     shapeFor <- garch_roll@forecast$density$Shape
     skewFor <- garch_roll@forecast$density$Skew
     quantile <- sapply(c, function(conf) rugarch::qdist("sstd", p = conf, mu = 0, sigma = 1, skew = skewFor, shape = shapeFor))
     pdf_value <- sapply(c, function(conf) rugarch::ddist("sstd", quantile[which(c == conf)], mu = 0, sigma = 1, skew = skewFor, shape = shapeFor))
-    es <- sigmaFor * ((shapeFor + quantile^2) / (shapeFor - 1) * (pdf_value / c))
     var <- -sigmaFor * (quantile)
+    es <- sigmaFor * ((shapeFor + quantile^2) / (shapeFor - 1) * (pdf_value / c))
   } else {
     stop("Unsupported distribution type. Use 'norm', 'std', or 'sstd'.")
   }

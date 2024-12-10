@@ -155,14 +155,16 @@ run_backtests <- function(actual, VaR, ES, alpha, prefix, VOL = NULL, b = 1000) 
 perform_mcs_test_by_confidence <- function(losses, alpha_levels, nboot) {
   mcs_results <- list()
 
-  # Exclude the "Date" column and process only model-related columns
-  relevant_columns <- colnames(losses)[colnames(losses) != "Date"]
+  # Exclude non-numeric columns (including "Date")
+  numeric_columns <- sapply(losses, is.numeric)
+  losses <- losses[, numeric_columns, drop = FALSE]
 
-  # Ensure there are relevant columns for processing
-  if (length(relevant_columns) == 0) {
-    warning("No relevant columns found for MCS test.")
+  if (ncol(losses) == 0) {
+    warning("No numeric columns found for MCS test.")
     return(mcs_results)
   }
+
+  relevant_columns <- colnames(losses)
 
   for (conf_level in unique(sub(".*_", "", relevant_columns))) {
     print(paste("Processing confidence level:", conf_level))
@@ -175,8 +177,8 @@ perform_mcs_test_by_confidence <- function(losses, alpha_levels, nboot) {
       next
     }
 
-    # Replace NA and run MCS test
-    conf_losses[is.na(conf_losses)] <- 1e6
+    # Remove columns with any NA values
+    conf_losses <- conf_losses[, colSums(is.na(conf_losses)) == 0, drop = FALSE]
 
     for (alpha in alpha_levels) {
       tryCatch({
@@ -198,7 +200,6 @@ perform_mcs_test_by_confidence <- function(losses, alpha_levels, nboot) {
   }
 
   return(mcs_results)
-
 }
 
 # Negative Asymmetric Laplace Log-Likelihood (AL) Loss
@@ -350,7 +351,7 @@ compute_losses_and_backtests <- function(df, models, c_levels, n, m, b = 1000, a
 
         if (!all(is.na(loss)) && any(is.na(loss))) {
           message(paste("Loss computation resulted in NA for model:", model_name, "confidence level:", c, ", setting high loss"))
-          loss[is.na(loss) | is.infinite(loss_vector)] <- 1e+10
+          loss[is.na(loss) | is.infinite(loss)] <- 1e+10
         }
 
         # Run backtests and add average loss

@@ -199,26 +199,40 @@ plot_var_es_predictions <- function(assets, conf_level, dir = "") {
       next
     }
 
+    # Extract model names (part before `.VaR.VaR_`)
+    var_models <- gsub("\\.VaR\\.VaR_.*$", "", var_cols)
+    es_models <- gsub("\\.ES\\.ES_.*$", "", es_cols)
+
+    # Assign colors to models
+    unique_models <- unique(c(var_models, es_models))
+    color_palette <- scales::hue_pal()(length(unique_models))  # Generate a color palette
+    model_colors <- setNames(color_palette, unique_models)     # Map colors to model names
+
     # Reshape data for ggplot using tidyr
     var_data <- predictions[, c("Date", var_cols), drop = FALSE]
     es_data <- predictions[, c("Date", es_cols), drop = FALSE]
 
     var_long <- tidyr::pivot_longer(var_data, cols = -Date, names_to = "Model", values_to = "VaR")
+    var_long$ModelName <- gsub("\\.VaR\\.VaR_.*$", "", var_long$Model)
+
     es_long <- tidyr::pivot_longer(es_data, cols = -Date, names_to = "Model", values_to = "ES")
+    es_long$ModelName <- gsub("\\.ES\\.ES_.*$", "", es_long$Model)
 
-    # Plot VaR without labels
-    var_plot <- ggplot2::ggplot(var_long, ggplot2::aes(x = Date, y = VaR, group = Model)) +
-      ggplot2::geom_line(alpha = 0.5) +
-      ggplot2::labs(title = paste(asset, "VaR Predictions (", conf_level, ")"), x = "Date", y = "VaR") +
-      ggplot2::theme_minimal() +
-      ggplot2::theme(legend.position = "none")  # Remove legend
+    # Plot VaR with model-specific colors
+    var_plot <- ggplot2::ggplot(var_long, ggplot2::aes(x = Date, y = VaR, color = ModelName, group = Model)) +
+      ggplot2::geom_line(alpha = 0.7) +
+      ggplot2::scale_color_manual(values = model_colors) +
+      ggplot2::labs(title = paste(asset, "VaR Predictions (", conf_level, ")"),
+                    x = "Date", y = "VaR", color = "Model") +
+      ggplot2::theme_minimal()
 
-    # Plot ES without labels
-    es_plot <- ggplot2::ggplot(es_long, ggplot2::aes(x = Date, y = ES, group = Model)) +
-      ggplot2::geom_line(alpha = 0.5) +
-      ggplot2::labs(title = paste(asset, "ES Predictions (", conf_level, ")"), x = "Date", y = "ES") +
-      ggplot2::theme_minimal() +
-      ggplot2::theme(legend.position = "none")  # Remove legend
+    # Plot ES with model-specific colors
+    es_plot <- ggplot2::ggplot(es_long, ggplot2::aes(x = Date, y = ES, color = ModelName, group = Model)) +
+      ggplot2::geom_line(alpha = 0.7) +
+      ggplot2::scale_color_manual(values = model_colors) +
+      ggplot2::labs(title = paste(asset, "ES Predictions (", conf_level, ")"),
+                    x = "Date", y = "ES", color = "Model") +
+      ggplot2::theme_minimal()
 
     # Append plots to the list
     var_plots[[asset]] <- var_plot
