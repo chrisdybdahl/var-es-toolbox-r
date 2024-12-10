@@ -152,7 +152,6 @@ forecast_u_EVT_GARCH <- function(
           quantile <- sapply(c, function(conf) rugarch::qdist("std", p = conf, mu = 0, sigma = 1, shape = shapeFor))
           pdf_value <- sapply(c, function(conf) rugarch::ddist("std", quantile[which(c == conf)], mu = 0, sigma = 1, shape = shapeFor))
           var[i, ] <- -sigmaFor * (quantile)
-          print(var[i, ])
           es[i, ] <- sigmaFor * ((shapeFor + quantile^2) / (shapeFor - 1) * (pdf_value / c))
         } else if (dist == "sstd") {
           shapeFor <- fit@fit$coef["shape"]
@@ -196,7 +195,7 @@ forecast_u_EVT_GARCH <- function(
 main <- function() {
   set.seed(123)
   df <- read.csv("C:/Users/chris/RStudioProjects/var-es-toolbox/data/clean_returns.csv", row.names = 1)
-  asset_df <- df["DEBMc1"]
+  asset_df <- df["DPc1"]
   asset_df$Date <- as.Date(rownames(asset_df))
   colnames(asset_df) <- c("Return", "Date")
   rownames(asset_df) <- NULL
@@ -205,7 +204,7 @@ main <- function() {
   result <- forecast_u_EVT_GARCH(
     asset_df,
     c = c(0.025, 0.05),
-    n = 250,
+    n = 989,
     m = 250,
     p = 1,
     q = 1,
@@ -213,11 +212,13 @@ main <- function() {
     t = 0.9,
     verbose = 1,
     model = "sGARCH",
-    dist = "std",
+    dist = "norm",
     solver = "hybrid",
-    solver.control = list(trace = 0, tol = 1e-7)
+    solver.control = list(trace = 1, tol = 1e-7)
   )
 
   print(tail(result))
 
 }
+
+#main()
